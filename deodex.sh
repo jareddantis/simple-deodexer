@@ -237,10 +237,10 @@ for processDir in $processDirList
 		done
 		echo ""
 		echo "Zipaligning APKs"
-		for f in $(ls *.apk)
+		for d in $(ls *.apk)
 			do
-				echo "- $f"
-				zpln $f
+				echo "- $d"
+				zpln $d
 		done
 done
 
