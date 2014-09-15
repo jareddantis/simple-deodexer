@@ -19,10 +19,9 @@ if [[ ! $1 ]] && [[ ! $2 ]]; then
 fi
 
 zpln() {
-	$rootdir/tools/zipalign -f -v 4 $1 ./temporary-file
+	$rootdir/tools/zipalign 4 $1 $1-temp
 	rm -f $1
-	mv ./temporary-file $1
-	echo
+	mv $1-temp $1
 }
 
 deodex_file() {
@@ -136,13 +135,13 @@ if [[ ! $1 == "" ]]; then
 		printf '\033c'
 		echo "$(count_odex app) odex files are in /app."
 	elif [ $1 == "-p" ]; then
-		processDirList=( app )
+		processDirList=( priv-app )
 		printf '\033c'
 		echo "$(count_odex priv-app) odex files are in /priv-app."
 	elif [ $1 == "-f" ]; then
 		processDirList=( framework )
 		printf '\033c'
-		echo "$(count_odex framework) odex files are in /app."
+		echo "$(count_odex framework) odex files are in /framework."
 		cp tools/java.awt.jar triage/framework/java.awt.jar
 	elif [ $1 == "-x" ]; then
 		printf '\033c'
@@ -171,12 +170,16 @@ if [[ ! $1 == "" ]]; then
 		echo "$(count_odex priv-app) odex files are in /priv-app."
 	elif [ $1 == "-z" ]; then
 		printf '\033c'
-		processDirList=( app framework priv-app )
+		processDirList=( app framework )
+		if [ -e triage/priv-app/*.apk ]; then
+			processDirList=( app framework priv-app )
+		fi
 		for processDir in $processDirList
 			do
 				cd triage/$processDir
 				for f in $(ls *.apk)
 					do
+						echo "Zipaligning $f"
 						zpln $f
 				done
 		done
@@ -185,6 +188,7 @@ if [[ ! $1 == "" ]]; then
 		cd triage/app
 		for f in $(ls *.apk)
 			do
+				echo "Zipaligning $f"
 				zpln $f
 		done
 	elif [ $1 == "-zzz" ]; then
@@ -192,6 +196,7 @@ if [[ ! $1 == "" ]]; then
 		cd triage/framework
 		for f in $(ls *.apk)
 			do
+				echo "Zipaligning $f"
 				zpln $f
 		done
 	elif [ $1 == "-zzzz" ]; then
@@ -199,6 +204,7 @@ if [[ ! $1 == "" ]]; then
 		cd triage/priv-app
 		for f in $(ls *.apk)
 			do
+				echo "Zipaligning $f"
 				zpln $f
 		done
 	elif [ $1 == "-j" ]; then
@@ -215,7 +221,7 @@ fi
 if [[ ! $2 ]] && [ $1 == "-hh" ]; then
 	tools/guide.sh
 	exit 0
-elif [[ ! $2 ]] && [[ $1 != "" ]]; then
+elif [[ ! $2 ]] && [[ $1 != "" ]] && [ ! $($(echo $1) | grep 'z') ]; then
 	tools/help.sh 1
 	exit 0
 else
@@ -233,6 +239,7 @@ for processDir in $processDirList
 		echo "Zipaligning APKs"
 		for f in $(ls *.apk)
 			do
+				echo "- $f"
 				zpln $f
 		done
 done
