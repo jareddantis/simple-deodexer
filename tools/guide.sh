@@ -1,0 +1,17 @@
+#!/bin/bash
+
+echo ""
+echo "Android Version    API Level"
+echo "----------------------------"
+echo "L                     20"
+echo "4.4.x                 19"
+echo "4.3.x                 18"
+echo "4.2 - 4.2.2           17"
+echo "4.1 - 4.1.1           16"
+echo "4.0.3 - 4.0.4         15"
+echo "4.0 - 4.0.2           14"
+echo "3.2                   13"
+echo "3.1.x                 12"
+echo "3.0.x                 11"
+echo "2.3.3 - 2.3.7         10"
+echo ""
