@@ -22,10 +22,11 @@ zpln() {
 	$rootdir/tools/zipalign -f -v 4 $1 ./temporary-file
 	rm -f $1
 	mv ./temporary-file $1
+	echo
 }
 
 deodex_file() {
-	echo ""
+	echo
 	odex_file=$1
 
 	if [ "$odex_file" == "" ]
@@ -34,7 +35,7 @@ deodex_file() {
 
 	elif [ -e $odex_file ]
 	then
-	  echo "Working on $no_ext"
+	  echo "Working on $odex_file"
 	  echo "- Disassembling $odex_file"
 	else
 	  echo "Error: $odex_file not found"
@@ -134,17 +135,14 @@ if [[ ! $1 == "" ]]; then
 		processDirList=( app )
 		printf '\033c'
 		echo "$(count_odex app) odex files are in /app."
-		echo $pagebreak
 	elif [ $1 == "-p" ]; then
 		processDirList=( app )
 		printf '\033c'
 		echo "$(count_odex priv-app) odex files are in /priv-app."
-		echo $pagebreak
 	elif [ $1 == "-f" ]; then
 		processDirList=( framework )
 		printf '\033c'
 		echo "$(count_odex framework) odex files are in /app."
-		echo $pagebreak
 		cp tools/java.awt.jar triage/framework/java.awt.jar
 	elif [ $1 == "-x" ]; then
 		printf '\033c'
@@ -165,14 +163,12 @@ if [[ ! $1 == "" ]]; then
 		printf '\033c'
 		echo "$(count_odex app) odex files are in /app."
 		echo "$(count_odex framework) odex files are in /framework."
-		echo ""
 	elif [ $1 == "-bb" ]; then
 		printf '\033c'
 		processDirList=( app framework priv-app )
 		echo "$(count_odex app) odex files are in /app."
 		echo "$(count_odex framework) odex files are in /framework."
 		echo "$(count_odex priv-app) odex files are in /priv-app."
-		echo $pagebreak
 	elif [ $1 == "-z" ]; then
 		printf '\033c'
 		processDirList=( app framework priv-app )
@@ -233,6 +229,8 @@ for processDir in $processDirList
 			do
 				deodex_file $f
 		done
+		echo ""
+		echo "Zipaligning APKs"
 		for f in $(ls *.apk)
 			do
 				zpln $f
@@ -248,4 +246,3 @@ echo "Done."
 echo ""
 
 exit 0
-
