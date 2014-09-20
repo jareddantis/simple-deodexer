@@ -1,5 +1,4 @@
 #!/bin/bash
-pagebreak="************************************************************"
 rootdir=$(pwd)
 chmod 0755 tools/*
 version=$(cat tools/version.txt)
@@ -118,31 +117,50 @@ deodex_file() {
 
 count_odex() {
 	cd triage/$1
-		for f in $(ls *.odex)
-		do
+
+	existence=`ls -1 *.odex 2>/dev/null | wc -l`
+	if [ $existence != 0 ]; then
+		for f in $(ls *.odex); do
 			count=$(($count+1))
-	done
-			
+		done
+	else
+		count=0
+	fi
 	echo $count
 }
 
 if [[ ! $1 == "" ]]; then
+	
+	# Help
 	if [ $1 == "-h" ]; then
 		tools/help.sh
 		exit 0
+		
+	# Deodex
 	elif [ $1 == "-a" ]; then
-		processDirList=( app )
+		processDirList=(app)
 		printf '\033c'
 		echo "$(count_odex app) odex files are in /app."
-	elif [ $1 == "-p" ]; then
-		processDirList=( priv-app )
+	elif [ $1 == "-b" ]; then
+		processDirList=(app framework)
 		printf '\033c'
-		echo "$(count_odex priv-app) odex files are in /priv-app."
+		echo "$(count_odex app) odex files are in /app."
+		echo "$(count_odex framework) odex files are in /framework."
+		if [ -d triage/priv-app ]; then
+			existence2=`ls -1 triage/priv-app/*.apk 2>/dev/null | wc -l`
+			if [ $existence2 != 0 ]; then
+				processDirList=(app framework priv-app)
+			fi
+		fi
 	elif [ $1 == "-f" ]; then
-		processDirList=( framework )
+		processDirList=(framework)
 		printf '\033c'
 		echo "$(count_odex framework) odex files are in /framework."
 		cp tools/java.awt.jar triage/framework/java.awt.jar
+	elif [ $1 == "-p" ]; then
+		processDirList=(priv-app)
+		printf '\033c'
+		echo "$(count_odex priv-app) odex files are in /priv-app."
 	elif [ $1 == "-x" ]; then
 		printf '\033c'
 		echo "Cleaning up"
@@ -157,67 +175,64 @@ if [[ ! $1 == "" ]]; then
 		mkdir triage/priv-app
 		echo "Done."
 		exit 0
-	elif [ $1 == "-b" ]; then
-		processDirList=( app framework )
-		printf '\033c'
-		echo "$(count_odex app) odex files are in /app."
-		echo "$(count_odex framework) odex files are in /framework."
-	elif [ $1 == "-bb" ]; then
-		printf '\033c'
-		processDirList=( app framework priv-app )
-		echo "$(count_odex app) odex files are in /app."
-		echo "$(count_odex framework) odex files are in /framework."
-		echo "$(count_odex priv-app) odex files are in /priv-app."
+	
+	# Zipalign options
 	elif [ $1 == "-z" ]; then
 		printf '\033c'
-		processDirList=( app framework )
-		if [ -e triage/priv-app/*.apk ]; then
-			processDirList=( app framework priv-app )
+		processDirList=(app framework)
+		if [ -d triage/priv-app ]; then
+			existence2=`ls -1 triage/priv-app/*.apk 2>/dev/null | wc -l`
+			if [ $existence2 != 0 ]; then
+				processDirList=(app framework priv-app)
+			fi
 		fi
-		for processDir in $processDirList
-			do
-				cd triage/$processDir
-				for f in $(ls *.apk)
-					do
-						echo "Zipaligning $f"
-						zpln $f
-				done
+		
+		for processDir in ${processDirList[@]}; do
+			cd triage/$processDir
+			for f in $(ls *.apk); do
+				echo "Zipaligning $f"
+				zpln $f
+			done
 		done
 	elif [ $1 == "-zz" ]; then
 		printf '\033c'
 		cd triage/app
-		for f in $(ls *.apk)
-			do
-				echo "Zipaligning $f"
-				zpln $f
+		for f in $(ls *.apk); do
+			echo "Zipaligning $f"
+			zpln $f
 		done
 	elif [ $1 == "-zzz" ]; then
 		printf '\033c'
 		cd triage/framework
-		for f in $(ls *.apk)
-			do
-				echo "Zipaligning $f"
-				zpln $f
+		for f in $(ls *.apk); do
+			echo "Zipaligning $f"
+			zpln $f
 		done
 	elif [ $1 == "-zzzz" ]; then
 		printf '\033c'
 		cd triage/priv-app
-		for f in $(ls *.apk)
-			do
-				echo "Zipaligning $f"
-				zpln $f
+		for f in $(ls *.apk); do
+			echo "Zipaligning $f"
+			zpln $f
 		done
+		
+	# Change smali tools version
 	elif [ $1 == "-j" ]; then
 		tools/change.sh
 		exit 0
 	fi
+
+# No option specified
 elif [[ ! $1 ]] && [[ $2 != "" ]]; then
 	tools/help.sh 4
+
+# Other error
 else
 	tools/help.sh 2 $1
 	exit 0
 fi
 
+# Show API level guide
 if [[ ! $2 ]] && [ $1 == "-hh" ]; then
 	tools/guide.sh
 	exit 0
@@ -228,22 +243,24 @@ else
 	api_level=$2
 fi
 
-for processDir in $processDirList
-	do
-		cd triage/$processDir
-		for f in $(ls *.odex)
-			do
-				deodex_file $f
-		done
-		echo ""
-		echo "Zipaligning APKs"
-		for d in $(ls *.apk)
-			do
-				echo "- $d"
-				zpln $d
-		done
+# Process
+for processDir in ${processDirList[@]}; do
+	echo ""
+	echo "Entering $processDir"
+	echo "************************"
+	cd $rootdir/triage/$processDir
+	for f in $(ls *.odex); do
+		deodex_file $f
+	done
+	echo ""
+	echo "Zipaligning APKs"
+	for d in $(ls *.apk);do
+		echo "- $d"
+		zpln $d
+	done
 done
 
+# Remove temp fw jar
 echo
 if [ -e $rootdir/triage/framework/java.awt.jar ]; then
 	rm $rootdir/triage/framework/java.awt.jar
