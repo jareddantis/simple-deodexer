@@ -3,7 +3,7 @@
 echo ""
 echo "Android Version    API Level"
 echo "----------------------------"
-echo "L                     20"
+echo "5.0.x                 20"
 echo "4.4.x                 19"
 echo "4.3.x                 18"
 echo "4.2 - 4.2.2           17"

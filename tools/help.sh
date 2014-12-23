@@ -1,5 +1,6 @@
 #!/bin/bash
 
+echo ""
 if [[ $1 = "1" ]]; then
 	echo "ERROR: API level not specified."
 elif [[ $1 == "2" ]]; then

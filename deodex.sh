@@ -3,6 +3,22 @@ rootdir=$(pwd)
 chmod 0755 tools/*
 version=$(cat tools/version.txt)
 
+if [[ $(uname -p) == "x86_64" ]] && [[ -e $rootdir/tools/zipalign ]] && [[ $(dpkg -l | grep 'libc6-i386') == "" ]] && [[ $(dpkg -l | grep 'ia32-libs') == "" ]]; then
+	if [[ $(lsb_release -r | cut -f 2 | sed -r 's/.{3}$//') -ge "13" ]]; then
+		if [[ $(lsb_release -r | cut -f 2 | sed -r 's/.{3}$//') == "13" ]] && [[ $(lsb_release -r | cut -f 2 | sed -r 's/^.{3}//') == "04" ]]; then
+			echo "ERROR: This script requires 32-bit compatibility packages."
+			echo "To install them, type \"sudo apt-get install ia32-libs\"."
+		else
+			echo "ERROR: This script requires 32-bit compatibility packages."
+			echo "To install them, type:"
+			echo "\"sudo apt-get install lib32gcc1 libc6-i386 lib32z1 lib32stdc++6 lib32bz2-1.0 lib32ncurses5\"."
+		fi
+	else
+		echo "ERROR: This script requires 32-bit compatibility packages."
+		echo "To install them, type \"sudo apt-get install ia32-libs\"."
+	fi
+fi
+
 if [ ! -d triage ]; then
 	mkdir triage
 	cd triage
@@ -236,7 +252,7 @@ fi
 if [[ ! $2 ]] && [ $1 == "-hh" ]; then
 	tools/guide.sh
 	exit 0
-elif [[ ! $2 ]] && [[ $1 != "" ]] && [ ! $($(echo $1) | grep 'z') ]; then
+elif [[ ! $2 ]] && [[ $1 != "" ]] && [ ! $(echo $1 | grep 'z') ]; then
 	tools/help.sh 1
 	exit 0
 else
