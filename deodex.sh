@@ -3,7 +3,7 @@ rootdir=$(pwd)
 chmod 0755 tools/*
 version=$(cat tools/version.txt)
 
-if [[ $(uname -p) == "x86_64" ]] && [[ -e $rootdir/tools/zipalign ]] && [[ $(dpkg -l | grep 'libc6-i386') == "" ]] && [[ $(dpkg -l | grep 'ia32-libs') == "" ]]; then
+if [[ $(uname -p) == "x86_64" ]] && [[ $(dpkg -l | grep 'libc6-i386') == "" ]] && [[ $(dpkg -l | grep 'ia32-libs') == "" ]]; then
 	if [[ $(lsb_release -r | cut -f 2 | sed -r 's/.{3}$//') -ge "13" ]]; then
 		if [[ $(lsb_release -r | cut -f 2 | sed -r 's/.{3}$//') == "13" ]] && [[ $(lsb_release -r | cut -f 2 | sed -r 's/^.{3}//') == "04" ]]; then
 			echo "ERROR: This script requires 32-bit compatibility packages."
@@ -17,6 +17,8 @@ if [[ $(uname -p) == "x86_64" ]] && [[ -e $rootdir/tools/zipalign ]] && [[ $(dpk
 		echo "ERROR: This script requires 32-bit compatibility packages."
 		echo "To install them, type \"sudo apt-get install ia32-libs\"."
 	fi
+	
+	exit 1
 fi
 
 if [ ! -d triage ]; then
