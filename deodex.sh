@@ -2,6 +2,8 @@
 rootdir=$(pwd)
 chmod 0755 tools/*
 version=$(cat tools/version.txt)
+SAVEIFS=$IFS
+IFS=$'\n'
 
 if [[ $(uname -p) == "x86_64" ]] && [[ $(which lsb_release) != "" ]]; then
 	if [[ $(dpkg -l | grep 'libc6-i386') == "" ]] || [[ $(dpkg -l | grep 'ia32-libs') == "" ]]; then
@@ -322,7 +324,7 @@ else
 fi
 # Show API level guide
 if [[ ! $2 ]] && [ $1 == "-hh" ]; then
-	showguide
+	apiguide
 	exit 0
 elif [[ ! $2 ]] && [[ $1 != "" ]] && [ ! $(echo $1 | grep 'z') ]; then
 	showhelp 1
@@ -359,5 +361,5 @@ fi
 
 echo "Done."
 echo ""
-
+IFS=$SAVEIFS
 exit 0
