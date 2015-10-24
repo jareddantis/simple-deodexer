@@ -12,7 +12,7 @@ So I just looked at the code I needed online and adapted it for standalone use.
 
 * The deodexer script
 * Zipalign binaries for Linux and OS X
-* Multiple versions of `smali` and `baksmali`
+* baksmali/smali 2.1.0
 
 ## How do I use it?
 
@@ -26,7 +26,6 @@ So I just looked at the code I needed online and adapted it for standalone use.
 * `-f` = Deodex frameworks
 * `-h` = Display the help message
 * `-hh` = Display the Android version <> API level guide
-* `-j` = Change baksmali/smali version
 * `-x` = Cleanup (delete all files in triage)
 * `-z` = Zipalign APKs in app, priv-app, and framework
 * `-zz` = Zipalign APKs in app
