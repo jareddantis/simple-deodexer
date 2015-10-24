@@ -1,7 +1,6 @@
 #!/bin/bash
 rootdir=$(pwd)
 chmod 0755 tools/*
-version=$(cat tools/version.txt)
 SAVEIFS=$IFS
 IFS=$'\n'
 
@@ -56,7 +55,6 @@ showhelp() {
 	echo "    -h       Display this help message"
 	echo "    -hh      Display the Android version <> API level guide"
 
-	echo "    -j       Change baksmali/smali version (currently $(cat tools/version.txt))"
 	echo "    -x       Cleanup (delete all files in triage)"
 
 	echo "    -z       Zipalign APKs in all folders"
@@ -102,17 +100,17 @@ deodex_file() {
 	
 	# Call baksmali
 	if [[ "$bootclass" != "" ]]; then    # Call baksmali with bootclasspath
-		java -Xmx512m -jar ../../tools/baksmali-$version.jar -a $api_level -d ../framework -c $bootclass -x $odex_file
+		java -Xmx512m -jar ../../tools/baksmali.jar -a $api_level -d ../framework -c $bootclass -x $odex_file
 		is_error=$?
 	else     # No bootclasspath
-		java -Xmx512m -jar ../../tools/baksmali-$version.jar -a $api_level -d ../framework -x $odex_file
+		java -Xmx512m -jar ../../tools/baksmali.jar -a $api_level -d ../framework -x $odex_file
 		is_error=$?
 	fi
 
 	# If there were no errors, then assemble it with smali
 	if [ "$is_error" == "0" ] && [ -d out ]; then
 		echo "- Assembling into classes.dex"
-		java -Xmx512m -jar ../../tools/smali-$version.jar -a $api_level -o classes.dex out
+		java -Xmx512m -jar ../../tools/smali.jar -a $api_level -o classes.dex out
 	  	rm -rf out
 
 		# Ensure classes.dex was produced
@@ -172,35 +170,11 @@ count_odex() {
 	echo $count
 }
 
-changesmali() {
-	echo
-	echo "Current version: $(cat tools/version.txt)"
-	echo "Available versions:"
-	echo "      1  -  1.3.3"
-	echo "      2  -  1.4.2"
-	echo "      3  -  2.0.6"
-	echo ""
-	echo "Choose number corresponding to desired version."
-	echo -n "Leave blank for default (2.0.6): "
-	read choice
-	case $choice in
-		1)
-			echo "1.3.3" > tools/version.txt
-			;;
-		2)
-			echo "1.4.2" > tools/version.txt
-			;;
-		*)
-			echo "2.0.6" > tools/version.txt
-			;;
-	esac
-	echo
-}
-
 apiguide() {
 	echo
 	echo "Android Version    API Level     Codename"
 	echo "--------------------------------------------------------"
+	echo "6.0.x                 23         Marshmallow"
 	echo "5.1 - 5.1.1           22         Lollipop"
 	echo "5.0 - 5.0.2           21"
 	echo "4.4W.x                20         KitKat for Android Wear"
@@ -309,10 +283,6 @@ if [[ ! $1 == "" ]]; then
 			echo "Zipaligning $f"
 			zpln $f
 		done
-	# Change smali tools version
-	elif [ $1 == "-j" ]; then
-		changesmali
-		exit 0
 	fi
 # No option specified
 elif [[ ! $1 ]] && [[ $2 != "" ]]; then
