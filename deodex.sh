@@ -216,9 +216,10 @@ if [[ ! $1 == "" ]]; then
 		echo "$(count_odex app) odex files are in /app."
 		echo "$(count_odex framework) odex files are in /framework."
 		if [ -d triage/priv-app ]; then
-			existence2=`ls -1 triage/priv-app/*.apk 2>/dev/null | wc -l`
+			existence2=`ls -1 triage/priv-app/*.odex 2>/dev/null | wc -l`
 			if [ $existence2 != 0 ]; then
 				processDirList=(app framework priv-app)
+				echo "$existence2 odex files are in /priv-app."
 			fi
 		fi
 	elif [ $1 == "-f" ]; then
