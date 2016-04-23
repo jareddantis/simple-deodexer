@@ -12,7 +12,6 @@ bootclass=
 api=0
 processDirList=0
 custom=0
-smaliver="2.1.2"
 
 # Set zipalign version
 if [[ $(uname -a | grep -i 'Linux') != "" ]]; then
@@ -179,12 +178,12 @@ deodex() {
 	fi
 	
 	# Call baksmali
-	java -Xmx512m -jar "$rootdir/tools/baksmali-$smaliver.jar" -a $api -d "$rootdir/triage/framework" -x $odex_file
+	java -Xmx512m -jar "$rootdir/tools/baksmali.jar" -a $api -d "$rootdir/triage/framework" -x $odex_file
 	is_error=$?
 
 	# If there were no errors, then assemble it with smali
 	if [ "$is_error" == "0" ] && [ -d out ]; then
-		java -Xmx512m -jar "$rootdir/tools/smali-$smaliver.jar" -a $api -o classes.dex out
+		java -Xmx512m -jar "$rootdir/tools/smali.jar" -a $api -o classes.dex out
 	  	rm -rf out
 
 		# Ensure classes.dex was produced
