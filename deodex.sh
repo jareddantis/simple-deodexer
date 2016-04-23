@@ -4,6 +4,7 @@ chmod 0755 tools/*
 SAVEIFS=$IFS
 IFS=$'\n'
 
+# Variables
 sysApp=0
 privApp=0
 framework=0
@@ -13,6 +14,7 @@ processDirList=0
 custom=0
 smaliver="2.1.2"
 
+# Set zipalign version
 if [[ $(uname -a | grep -i 'Linux') != "" ]]; then
 	aligner="$rootdir/tools/zipalign.linux"
 elif [[ $(uname -a | grep -i 'Darwin') != "" ]]; then
@@ -21,11 +23,24 @@ else
 	echo "Error: Unsupported operating system."
 	exit 1
 fi
-chmod +x $aligner
 
-if [[ $(which java) == "" ]]; then
-	echo "This script requires Java version 1.7 or later to function properly."
-	exit 1
+# Check Java - http://stackoverflow.com/questions/7334754/correct-way-to-check-java-version-from-bash-script
+if type -p java; then
+    echo found java executable in PATH
+    _java=java
+elif [[ -n "$JAVA_HOME" ]] && [[ -x "$JAVA_HOME/bin/java" ]];  then
+    echo found java executable in JAVA_HOME     
+    _java="$JAVA_HOME/bin/java"
+else
+    echo "This script requires Java 1.7 or later to run properly."
+    exit 1
+fi
+if [[ "$_java" ]]; then
+    version=$("$_java" -version 2>&1 | awk -F '"' '/version/ {print $2}')
+    if [[ "$version" < "1.7" ]]; then
+        echo "This script requires Java 1.7 or later to run properly."
+    	exit 1
+    fi
 fi
 
 if [ ! -d triage ]; then
@@ -297,14 +312,12 @@ fi
 
 # Deodex!
 for processDir in ${processDirList[@]}; do
-	echo ""
-	echo "Entering $processDir"
-	echo "************************"
+	echo -e "\nDeodexing files in $processDir"
 	cd "$rootdir/triage/$processDir"
 	for f in *.odex; do
 		deodex $f
 	done
-	echo "Zipaligning APKs"
+	echo -e "\nZipaligning APKs"
 	for d in *.apk; do
 		zpln $d
 	done
