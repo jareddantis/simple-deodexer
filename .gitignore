@@ -24,3 +24,9 @@ proguard/
 
 # Log Files
 *.log
+
+# Triage
+triage/app
+triage/framework
+triage/priv-app
+
