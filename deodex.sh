@@ -163,7 +163,7 @@ deodex() {
 
 	if [[ -e $odex_file ]];  then
 		odex_no_ext=$(echo $odex_file | sed 's/.odex//')
-	  	if [[ -e "$odex_no_ext.apk" ]]; then
+	  	if [[ -e "$odex_no_ext.apk" ]] || [[ -e "$odex_no_ext.jar" ]]; then
 	  		echo "Processing $odex_file"
 	  	else
 	  		echo "[*] Error: $odex_no_ext.odex exists, but $odex_no_ext.apk doesn't"
