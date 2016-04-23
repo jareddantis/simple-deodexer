@@ -116,7 +116,7 @@ count_odex() {
 }
 
 zpln() {
-	"$rootdir/$aligner" 4 "$1" "$1-temp"
+	"$aligner" 4 "$1" "$1-temp"
 	rm -f "$1"
 	mv "$1-temp" "$1"
 }
@@ -283,7 +283,7 @@ for processDir in ${processDirList[@]}; do
 	echo "Entering $processDir"
 	echo "************************"
 	cd "$rootdir/triage/$processDir"
-	for f in $(ls *.odex); do
+	for f in *.odex; do
 		deodex $f
 	done
 	echo "Zipaligning APKs"
