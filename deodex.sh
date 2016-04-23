@@ -308,18 +308,18 @@ fi
 
 # Deodex!
 for processDir in ${processDirList[@]}; do
-	echo -e "\nDeodexing apps in /$processDir"
+	echo -e "\nDeodexing files in /$processDir"
 	echo "-------------------------"
 	cd "$rootdir/triage/$processDir"
 	for f in *.odex; do
 		deodex $f
 	done
-	echo -e "\nZipaligning apps"
+	echo "Zipaligning apps"
 	for d in *.apk; do
 		zpln $d
 	done
 done
 
-echo "Done."
+echo -e "\nDone."
 IFS=$SAVEIFS
 exit 0
