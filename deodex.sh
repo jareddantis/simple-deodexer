@@ -167,13 +167,13 @@ deodex() {
 	if [[ -e $odex_file ]];  then
 		odex_no_ext=$(echo $odex_file | sed 's/.odex//')
 	  	if [[ -e "$odex_no_ext.apk" ]]; then
-	  		echo -n "Processing $odex_file "
+	  		echo "Processing $odex_file"
 	  	else
-	  		echo "ERROR: $odex_no_ext.odex exists, but $odex_no_ext.apk doesn't"
+	  		echo "[*] Error: $odex_no_ext.odex exists, but $odex_no_ext.apk doesn't"
 	  		exit 1
 	  	fi
 	else
-	  	echo "Invalid file \"$odex_file\""
+	  	echo "[*] Error: Invalid file \"$odex_file\""
 	  	exit 1
 	fi
 	
@@ -201,7 +201,7 @@ deodex() {
 				if [[ -e $main_file ]]; then
 					ext=jar
 				else          
-					echo "- failed, $no_ext.jar or $no_ext.apk unexpectedly removed!"
+					echo "[*] Error: $no_ext.jar or $no_ext.apk unexpectedly removed!"
 					error_found=1
 			  	fi
 			fi
@@ -217,7 +217,7 @@ deodex() {
 			  	fi	
 			fi
 	  	else
-			echo "- failed, unable to generate classes.dex!"
+			echo "[*] Error: unable to generate classes.dex!"
 	  	fi
 	else
 		echo ""
