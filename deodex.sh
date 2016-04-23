@@ -25,10 +25,8 @@ fi
 
 # Check Java - http://stackoverflow.com/questions/7334754/correct-way-to-check-java-version-from-bash-script
 if type -p java; then
-    echo found java executable in PATH
     _java=java
-elif [[ -n "$JAVA_HOME" ]] && [[ -x "$JAVA_HOME/bin/java" ]];  then
-    echo found java executable in JAVA_HOME     
+elif [[ -n "$JAVA_HOME" ]] && [[ -x "$JAVA_HOME/bin/java" ]];  then 
     _java="$JAVA_HOME/bin/java"
 else
     echo "This script requires Java 1.7 or later to run properly."
