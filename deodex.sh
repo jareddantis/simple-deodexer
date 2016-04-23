@@ -212,8 +212,8 @@ deodex() {
 			  	rm -f $odex_file
 			  	zip -r -q $main_file classes.dex
 			  	rm -f classes.dex
-			  	if [ -e $main_file ]; then
-					echo "- done."
+			  	if [[ ! -e $main_file ]]; then
+					echo "[*] Error: $no_ext.jar or $no_ext.apk unexpectedly removed!"
 			  	fi	
 			fi
 	  	else
