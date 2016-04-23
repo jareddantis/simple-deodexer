@@ -24,7 +24,7 @@ else
 fi
 
 # Check Java - http://stackoverflow.com/questions/7334754/correct-way-to-check-java-version-from-bash-script
-if type -p java; then
+if type -p java >/dev/null; then
     _java=java
 elif [[ -n "$JAVA_HOME" ]] && [[ -x "$JAVA_HOME/bin/java" ]];  then 
     _java="$JAVA_HOME/bin/java"
@@ -159,7 +159,6 @@ zpln_all() {
 }
 
 deodex() {
-	echo
 	odex_file=$1
 
 	if [[ -e $odex_file ]];  then
@@ -302,19 +301,20 @@ if [[ $custom == 0 ]]; then
 		fi
 
 		for f in ${processDirList[@]}; do
-			echo "$(count_odex $f) odex files are in $f/."
+			echo "$(count_odex $f) odex files are in /$f."
 		done
 	fi
 fi
 
 # Deodex!
 for processDir in ${processDirList[@]}; do
-	echo -e "\nDeodexing files in $processDir"
+	echo -e "\nDeodexing apps in /$processDir"
+	echo "-------------------------"
 	cd "$rootdir/triage/$processDir"
 	for f in *.odex; do
 		deodex $f
 	done
-	echo -e "\nZipaligning APKs"
+	echo -e "\nZipaligning apps"
 	for d in *.apk; do
 		zpln $d
 	done
