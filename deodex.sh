@@ -106,10 +106,10 @@ build_list() {
 
 count_odex() {
 	cd "triage/$1"
-	existence=`ls -l *.odex 2>/dev/null | wc -l`
-	if [ $existence != 0 ]; then
-		for f in $(ls *.odex); do
-			count=$(($count+1))
+	count="$(ls -1 *.odex 2>/dev/null | wc -l | sed 's/       //')"
+	if [[ $count != 0 ]]; then
+		for f in *.odex; do
+			count=$((count+1))
 		done
 	else
 		count=0
@@ -156,17 +156,17 @@ deodex() {
 	
 	# Call baksmali
 	if [[ "$bootclass" != "" ]]; then    # Call baksmali with bootclasspath
-		java -Xmx512m -jar ../../tools/baksmali-$smaliver.jar -a $api -d ../framework -c $bootclass -x $odex_file
+		java -Xmx512m -jar "$rootdir/tools/baksmali-$smaliver.jar" -a $api -d "$rootdir/triage/framework" -x $odex_file
 		is_error=$?
 	else     # No bootclasspath
-		java -Xmx512m -jar ../../tools/baksmali-$smaliver.jar -a $api -d ../framework -x $odex_file
+		java -Xmx512m -jar "$rootdir/tools/baksmali-$smaliver.jar" -a $api -d "$rootdir/triage/framework" -x $odex_file
 		is_error=$?
 	fi
 
 	# If there were no errors, then assemble it with smali
 	if [ "$is_error" == "0" ] && [ -d out ]; then
 		echo "- Assembling into classes.dex"
-		java -Xmx512m -jar ../../tools/smali-$smaliver.jar -a $api -o classes.dex out
+		java -Xmx512m -jar "$rootdir/tools/smali-$smaliver.jar" -a $api -o classes.dex out
 	  	rm -rf out
 
 		# Ensure classes.dex was produced
@@ -276,14 +276,24 @@ if [[ $custom == 0 ]]; then
 	if [[ $processDirList == 0 ]]; then
 		echo "No apps to deodex."
 		exit 0
-	fi
-fi
+	else
+		# Check for valid API level
+		if [[ $api == 0 ]]; then
+			echo "Error: Please specify a valid API level."
+			show_help
+			exit 0
+		fi
 
-# Check for valid API level
-if [[ $api == 0 ]]; then
-	echo "Error: Please specify a valid API level."
-	show_help
-	exit 0
+		if [[ $sysApp == 1 ]] || [[ $privApp == 1 ]]; then
+			if [[ ! -d "triage/framework" ]]; then
+				echo "Error: Framework files must be present when deodexing apps."
+			fi
+		fi
+
+		for f in ${processDirList[@]}; do
+			echo "$(count_odex $f) odex files are in $f/."
+		done
+	fi
 fi
 
 # Deodex!
