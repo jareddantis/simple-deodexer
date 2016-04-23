@@ -65,7 +65,7 @@ show_help() {
 	echo "        e.g. \"`basename $0` -l 19\""
 	echo "---------------------------------------------------"
 	echo "Options:"
-	echo "    -b         Call baksmali with bootclasspath"
+	echo "    -b <file>  Use bootclass tools/<file>"
 	echo "    -f <dir>   Only deodex apps in triage/<dir>."
 	echo "    -g         Display API level list"
 	echo "    -h         Display this help message"
