@@ -11,6 +11,7 @@ bootclass=
 api=0
 processDirList=0
 custom=0
+smaliver="2.1.2"
 
 if [[ $(uname -a | grep -i 'Linux') != "" ]]; then
 	aligner="$rootdir/tools/zipalign.linux"
@@ -71,6 +72,7 @@ show_help() {
 	echo "    -h         Display this help message"
 	echo "    -l <num>   Use API level <num>. REQUIRED!"
 	echo "    -z         Only zipalign apps and exit"
+	echo "    -s <ver>   Use (bak)smali version <ver> (default 2.1.2)."
 	echo
 }
 
@@ -154,17 +156,17 @@ deodex() {
 	
 	# Call baksmali
 	if [[ "$bootclass" != "" ]]; then    # Call baksmali with bootclasspath
-		java -Xmx512m -jar ../../tools/baksmali.jar -a $api -d ../framework -c $bootclass -x $odex_file
+		java -Xmx512m -jar ../../tools/baksmali-$smaliver.jar -a $api -d ../framework -c $bootclass -x $odex_file
 		is_error=$?
 	else     # No bootclasspath
-		java -Xmx512m -jar ../../tools/baksmali.jar -a $api -d ../framework -x $odex_file
+		java -Xmx512m -jar ../../tools/baksmali-$smaliver.jar -a $api -d ../framework -x $odex_file
 		is_error=$?
 	fi
 
 	# If there were no errors, then assemble it with smali
 	if [ "$is_error" == "0" ] && [ -d out ]; then
 		echo "- Assembling into classes.dex"
-		java -Xmx512m -jar ../../tools/smali.jar -a $api -o classes.dex out
+		java -Xmx512m -jar ../../tools/smali-$smaliver.jar -a $api -o classes.dex out
 	  	rm -rf out
 
 		# Ensure classes.dex was produced
@@ -210,7 +212,7 @@ deodex() {
 	fi
 }
 
-while getopts "b:hgzl:f:" opt; do
+while getopts "b:hgzl:f:s:" opt; do
 	case "$opt" in
 		b)
 			bootclass="$rootdir/tools/$OPTARG"
@@ -242,6 +244,13 @@ while getopts "b:hgzl:f:" opt; do
 			;;
 		l)
 			api="$OPTARG"
+			;;
+		s)
+			if [[ -e "$rootdir/tools/baksmali-$OPTARG.jar" ]] && [[ -e "$rootdir/tools/smali-$OPTARG.jar" ]]; then
+				smaliver="$OPTARG"
+			else
+				echo "Invalid baksmali/smali version \"$OPTARG\", defaulting to 2.1.2."
+			fi
 			;;
 		\?)
 			echo "Invalid option -\"$OPTARG\"."
