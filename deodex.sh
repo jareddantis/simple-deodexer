@@ -23,6 +23,11 @@ else
 fi
 chmod +x $aligner
 
+if [[ $(which java) == "" ]]; then
+	echo "This script requires Java version 1.7 or later to function properly."
+	exit 1
+fi
+
 if [ ! -d triage ]; then
 	mkdir triage
 	cd triage
@@ -145,70 +150,64 @@ deodex() {
 	echo
 	odex_file=$1
 
-	if [ "$odex_file" == "" ]; then
-		echo "Error: No .odex file specified"
-	elif [ -e $odex_file ];  then
-	  	echo "Working on $odex_file"
-	  	echo "- Disassembling $odex_file"
+	if [[ -e $odex_file ]];  then
+		odex_no_ext=$(echo $odex_file | sed 's/.odex//')
+	  	if [[ -e "$odex_no_ext.apk" ]]; then
+	  		echo -n "Processing $odex_file "
+	  	else
+	  		echo "ERROR: $odex_no_ext.odex exists, but $odex_no_ext.apk doesn't"
+	  		exit 1
+	  	fi
 	else
-	  	echo "Error: $odex_file not found"
+	  	echo "Invalid file \"$odex_file\""
+	  	exit 1
 	fi
 	
 	# Call baksmali
-	if [[ "$bootclass" != "" ]]; then    # Call baksmali with bootclasspath
-		java -Xmx512m -jar "$rootdir/tools/baksmali-$smaliver.jar" -a $api -d "$rootdir/triage/framework" -x $odex_file
-		is_error=$?
-	else     # No bootclasspath
-		java -Xmx512m -jar "$rootdir/tools/baksmali-$smaliver.jar" -a $api -d "$rootdir/triage/framework" -x $odex_file
-		is_error=$?
-	fi
+	java -Xmx512m -jar "$rootdir/tools/baksmali-$smaliver.jar" -a $api -d "$rootdir/triage/framework" -x $odex_file
+	is_error=$?
 
 	# If there were no errors, then assemble it with smali
 	if [ "$is_error" == "0" ] && [ -d out ]; then
-		echo "- Assembling into classes.dex"
 		java -Xmx512m -jar "$rootdir/tools/smali-$smaliver.jar" -a $api -o classes.dex out
 	  	rm -rf out
 
 		# Ensure classes.dex was produced
-		if [ -e classes.dex ]; then
+		if [[ -e "classes.dex" ]]; then
 			# Ensure the .odex file's .apk or .jar is found
-			no_ext=`echo $odex_file | sed 's/.odex//'`
+			no_ext=$(echo $odex_file | sed 's/.odex//')
 			main_file=$no_ext.apk
-			error_found=no
+			error_found=0
 
-			if [ -e $main_file ];then
+			if [[ -e $main_file ]];then
 				ext=apk
 			else
 				main_file=$no_ext.jar
 			  
-				if [ -e $main_file ]; then
+				if [[ -e $main_file ]]; then
 					ext=jar
 				else          
-					echo "ERROR: Can't find $no_ext.jar or $no_ext.apk"
-					error_found=yes
+					echo "- failed, $no_ext.jar or $no_ext.apk unexpectedly removed!"
+					error_found=1
 			  	fi
 			fi
 
-			if [ $error_found == yes ]; then
-			  	echo "- Removing classes.dex"
+			if [[ $error_found == 1 ]]; then
 			  	rm -f classes.dex
 			else
-			  	echo "- Removing $odex_file"
 			  	rm -f $odex_file
-
-			  	echo "- Putting classes.dex into $main_file"
 			  	zip -r -q $main_file classes.dex
 			  	rm -f classes.dex
 			  	if [ -e $main_file ]; then
-					echo "$main_file has been deodexed"
+					echo "- done."
 			  	fi	
 			fi
 	  	else
-			echo "WARNING: Unable to produce classes.dex!"
+			echo "- failed, unable to generate classes.dex!"
 	  	fi
 	else
-	  echo "WARNING: Cannot deodex $odex_file"
-	  rm -rf out
+		echo ""
+		rm -rf out
 	fi
 }
 
