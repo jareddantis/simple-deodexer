@@ -45,7 +45,7 @@ show_api() {
     echo
     echo "Android Version    API Level     Codename"
     echo "--------------------------------------------------------"
-    echo "8.0.x                 26         O"
+    echo "8.0.x                 26         Oreo"
     echo "7.1.x                 25         Nougat"
     echo "7.0.x                 24"
     echo "6.0.x                 23         Marshmallow"
@@ -80,7 +80,6 @@ show_help() {
     echo "        e.g. \"`basename $0` -l 19\""
     echo "---------------------------------------------------"
     echo "Options:"
-    echo "    -b <file>  Use bootclass tools/<file>"
     echo "    -d <dir>   Use <dir> as base directory instead of triage/"
     echo "    -f <dir>   Only deodex apps in triage/<dir>."
     echo "    -g         Display API level list"
@@ -160,11 +159,16 @@ deodex() {
 
     if [[ -e $odex_file ]];  then
         odex_no_ext=$(echo $odex_file | sed 's/.odex//')
-        if [[ -e "$odex_no_ext.apk" ]] || [[ -e "$odex_no_ext.jar" ]]; then
-            echo "Processing $odex_file"
-        else
-            echo "[*] Error: $odex_no_ext.odex exists, but $odex_no_ext.apk doesn't"
+        if [ "$api" -ge "26" ] && [[ ! -e "$odex_no_ext.vdex" ]]; then
+            echo "[*] Error: $odex_file exists, but $odex_no_ext.vdex doesn't"
             exit 1
+        else
+            if [[ -e "$odex_no_ext.apk" ]] || [[ -e "$odex_no_ext.jar" ]]; then
+                echo "Processing $odex_file"
+            else
+                echo "[*] Error: $odex_no_ext.odex exists, but $odex_no_ext.apk doesn't"
+                exit 1
+            fi
         fi
     else
         echo "[*] Error: Invalid file \"$odex_file\""
@@ -172,7 +176,7 @@ deodex() {
     fi
     
     # Call baksmali
-    java -Xmx512m -jar "$rootdir/tools/baksmali.jar" x $odex_file -a $api -d "$triage/framework"
+    java -Xmx512m -jar "$rootdir/tools/baksmali.jar" x $odex_file -a $api "$bootclass"
     is_error=$?
 
     # If there were no errors, then assemble it with smali
@@ -229,11 +233,8 @@ getfullpath() {
     fi
 }
 
-while getopts "b:d:hgzl:f:" opt; do
+while getopts "d:hgzl:f:" opt; do
     case "$opt" in
-        b)
-            bootclass="$rootdir/tools/$OPTARG"
-            ;;
         d)
             newdir="$(getfullpath $OPTARG)"
             if [[ -d "$newdir" ]]; then
@@ -300,6 +301,18 @@ if [[ $custom == 0 ]]; then
             echo "Error: Please specify a valid API level."
             show_help
             exit 0
+        fi
+
+        # Build bootclasspath
+        if [ "$api" -lt "20" ]; then
+            bootclass="-d ../framework"
+            echo "Please remember to copy your bootclass files to $triage/framework!"
+        elif [ "$api" -ge "20" ] && [ "$api" -le "23" ]; then
+            bootclass="-b ../framework/boot.oat"
+            echo "Please remember to copy your boot.oat to $triage/framework!"
+        else
+            [ -d "$triage/framework/arm64" ] && bootclass="-d ../framework/arm64" || bootclass="-d ../framework/arm"
+            echo "Please remember to copy /system/framework/arm* to $triage/framework!"
         fi
 
         if [[ $sysApp == 1 ]] || [[ $privApp == 1 ]]; then
