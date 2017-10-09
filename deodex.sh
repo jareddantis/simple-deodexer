@@ -176,7 +176,7 @@ deodex() {
     fi
     
     # Call baksmali
-    java -Xmx512m -jar "$rootdir/tools/baksmali.jar" x $odex_file -a $api "$bootclass"
+    java -Xmx512m -jar "$rootdir/tools/baksmali.jar" x $odex_file -a $api "${bootclass[@]}"
     is_error=$?
 
     # If there were no errors, then assemble it with smali
@@ -305,13 +305,13 @@ if [[ $custom == 0 ]]; then
 
         # Build bootclasspath
         if [ "$api" -lt "20" ]; then
-            bootclass="-d ../framework"
+            bootclass=("-d" "../framework")
             echo "Please remember to copy your bootclass files to $triage/framework!"
         elif [ "$api" -ge "20" ] && [ "$api" -le "23" ]; then
-            bootclass="-b ../framework/boot.oat"
+            bootclass=("-b" "../framework/boot.oat")
             echo "Please remember to copy your boot.oat to $triage/framework!"
         else
-            [ -d "$triage/framework/arm64" ] && bootclass="-d ../framework/arm64" || bootclass="-d ../framework/arm"
+            [ -d "$triage/framework/arm64" ] && bootclass=("-d" "../framework/arm64") || bootclass=("-d" "../framework/arm")
             echo "Please remember to copy /system/framework/arm* to $triage/framework!"
         fi
 
