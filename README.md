@@ -1,22 +1,35 @@
 simple-deodexer
 ===============
 
-## What is it?
+A simple Android application deodexer for Linux & macOS, derived from @dsixda's Android Kitchen.
 
-A simple deodexer for Linux, derived from @dsixda's Android Kitchen.
-I made this mainly because I never had luck downloading GitHub files
-over my connection, and Android Kitchen (~27 MB) took too long to download.
-So I just looked at the code I needed online and adapted it for standalone use.
-
-## What's included?
+## Contents
 
 * The deodexer script
 * Zipalign binaries for Linux and OS X
-* baksmali/smali 2.1.0
+* baksmali/smali 2.2.1
 
-## How do I use it?
+## Usage
 
-1. Make sure `deodex.sh` has been `chmod`ded to `0755`.
-2. Put your apps in their respective folders in triage. (triage/app, triage/framework, triage/priv-app)
-3. Run `./deodex.sh <options>`.
-4. If you need help, run `./deodex.sh -h`.
+```bash
+$ chmod a+x ./deodex.sh
+$ ./deodex.sh -h
+  Usage: ./deodex.sh <options>
+         e.g. "./deodex.sh -l 19"
+  ---------------------------------------------------
+  Options:
+      -d <dir>   Use <dir> as base directory instead of triage/
+      -f <dir>   Only deodex apps in triage/<dir>.
+      -g         Display API level list
+      -h         Display this help message
+      -l <num>   Use API level <num>. REQUIRED!
+      -z         Only zipalign apps and exit
+```
+
+## Supported Android versions
+
+To check the currently supported versions:
+
+```bash
+$ ./deodex -g
+```
