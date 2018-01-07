@@ -159,13 +159,13 @@ deodex() {
 
     echo "- $apk"
     odexName="$(echo $odexFile | sed 's/.odex//')"
-    [ "$api" -ge "26" ] && vdexFile="$odexName.vdex"
+    [ "$api" -ge "26" ] && [[ -e "$odexName.vdex" ]] && odexFile="$odexName.vdex"
 
     if [[ "$api" == "21" ]] || [[ "$api" == "22" ]]; then
         # Convert odex to dex
         odexBase="$(echo $odexName | rev | cut -f1 -d/ | rev)"
         echo "  * deoptimizing $odexFile"
-        java -Xmx512m -jar "$oat2dex" $odexFile "$triage/framework/$arch/odex" >> $triage/oat2dex.log
+        java -Xmx512m -jar "$oat2dex" $odexFile "$triage/framework/$arch" >> $triage/oat2dex.log
         exitCode=$?
 
         if [[ "$exitCode" == "0" ]] && [[ -f "$odexName.dex" ]]; then

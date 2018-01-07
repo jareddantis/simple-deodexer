@@ -7,6 +7,7 @@ A simple Android application deodexer for Linux & macOS, derived from @dsixda's 
 
 * zipalign binaries for Linux and macOS (from android build-tools 27.0.2)
 * baksmali/smali 2.2.2
+* oat2dex 0.88
 
 ## Usage
 
