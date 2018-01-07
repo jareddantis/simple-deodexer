@@ -1,7 +1,7 @@
 simple-deodexer
 ===============
 
-A simple Android application deodexer for Linux & macOS, derived from @dsixda's Android Kitchen.
+A simple Android application deodexer for Linux & macOS.
 
 ## Includes
 
@@ -27,6 +27,8 @@ $ ./deodex.sh -h
 ```
 
 ## Supported Android versions
+
+Android 8.0 and below are currently supported. (7.1.x and below have been tested.)
 
 To check the currently supported versions:
 
