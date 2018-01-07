@@ -3,11 +3,10 @@ simple-deodexer
 
 A simple Android application deodexer for Linux & macOS, derived from @dsixda's Android Kitchen.
 
-## Contents
+## Includes
 
-* The deodexer script
-* Zipalign binaries for Linux and OS X
-* baksmali/smali 2.2.1
+* zipalign binaries for Linux and macOS (from android build-tools 27.0.2)
+* baksmali/smali 2.2.2
 
 ## Usage
 

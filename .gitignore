@@ -26,7 +26,6 @@ proguard/
 *.log
 
 # Triage
-triage/app
-triage/framework
-triage/priv-app
+triage/
+!triage/put_apps_here
 

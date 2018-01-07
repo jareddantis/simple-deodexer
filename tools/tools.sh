@@ -2,10 +2,12 @@
 #            Variables           #
 ##################################
 api=0
+arch="arm"
 aligner=
-processDirList=(app priv-app framework)
+processDirList=(framework app priv-app)
 baksmali="$rootDir/tools/baksmali-2.2.2.jar"
 smali="$rootDir/tools/smali-2.2.2.jar"
+oat2dex="$rootDir/tools/oat2dex.jar"
 
 ##################################
 #          Help methods          #
@@ -123,39 +125,91 @@ zpln_all() {
     done
 }
 
+deoptBoot() {
+    for plat in arm arm64; do
+        fwDir="$triage/framework/$plat"
+        if [[ -e "$fwDir/boot.oat" ]] && [[ ! -d "$fwDir/odex" ]]; then
+            java -Xmx512m -jar "$oat2dex" boot "$fwDir/boot.oat" >> $triage/oat2dex.log
+            exitCode=$?
+
+            if [[ "$exitCode" != "0" ]]; then
+                echo "- error while deoptimizing framework/$plat/boot.oat"
+                echo "  check $triage/oat2dex.log"
+                error=1
+                exit
+            else
+                cd $fwDir/odex
+                for f in *.dex; do
+                    nf="$(echo $f | sed 's/.dex/.odex/')"
+                    [[ ! -e "../$nf" ]] && mv $f ../$nf
+                done
+            fi
+            echo "- framework/$plat/boot.oat deoptimized"
+        else
+            echo "- framework/$plat/boot.oat not found or is already deoptimized"
+        fi
+    done
+}
+
 deodex() {
     baseDir="$1"
     apk="$2"
     odexFile="$3"
+    error=0
 
     echo "- $apk"
     odexName="$(echo $odexFile | sed 's/.odex//')"
     [ "$api" -ge "26" ] && vdexFile="$odexName.vdex"
 
-    # Disassemble odex
-    echo "  * baksmaling $odexFile"
-    java -Xmx512m -jar "$baksmali" x $odexFile -a $api -d "$bootclasspath"
-    exitCode=$?
+    if [[ "$api" == "21" ]] || [[ "$api" == "22" ]]; then
+        # Convert odex to dex
+        odexBase="$(echo $odexName | rev | cut -f1 -d/ | rev)"
+        echo "  * deoptimizing $odexFile"
+        java -Xmx512m -jar "$oat2dex" $odexFile "$triage/framework/$arch/odex" >> $triage/oat2dex.log
+        exitCode=$?
 
-    # If there were no errors, then assemble classes.dex
-    if [ "$exitCode" == "0" ] && [[ -d "out" ]]; then
-        echo "  * smaling $odexFile"
-        java -Xmx512m -jar "$smali" a -a $api -o classes.dex out
-        rm -rf out
+        if [[ "$exitCode" == "0" ]] && [[ -f "$odexName.dex" ]]; then
+            mv $odexName.dex classes.dex
+            [[ -e "$odexName-classes2.dex" ]] && mv "$odexName-classes2.dex" classes2.dex
+            [[ -e "$odexName-classes3.dex" ]] && mv "$odexName-classes3.dex" classes3.dex
+        else
+            echo "  ! unable to generate classes.dex, check $triage/oat2dex.log"
+            [[ -e "$odexName.dex" ]] && rm -f $odexName.dex
+            [[ -e "$triage/framework/$odexBase.odex" ]] && rm -f $triage/framework/$odexBase.odex
+            error=1
+        fi
+    else
+        # Disassemble odex
+        echo "  * baksmaling $odexFile"
+        java -Xmx512m -jar "$baksmali" x $odexFile -a $api -d "$bootclasspath"
+        exitCode=$?
 
-        # Ensure classes.dex was produced
-        if [[ -e "classes.dex" ]]; then
-            echo "  * zipping classes.dex into apk"
-            zip -r -q $apk classes.dex
-            rm -f $odexFile classes.dex
+        # If there were no errors, then assemble classes.dex
+        if [ "$exitCode" == "0" ] && [[ -d "out" ]]; then
+            echo "  * smaling $odexFile"
+            java -Xmx512m -jar "$smali" a -a $api -o classes.dex out
+            rm -rf out
 
-            extension="$(echo $apk | rev | cut -f1 -d. | rev)"
-            if [[ "$extension" == "apk" ]]; then
-                echo "  * zipaligning apk"
-                zpln $apk silent
+            # Ensure classes.dex was produced
+            if [[ ! -e "classes.dex" ]]; then
+                echo "  ! unable to generate classes.dex"
+                error=1
             fi
         else
-            echo "  ! unable to generate classes.dex"
+            echo "  ! unable to decompile $odexFile"
+            error=1
+        fi
+    fi
+
+    if [[ "$error" == "0" ]]; then
+        echo "  * zipping classes.dex into apk"
+        zip -r -q $apk classes*.dex
+        rm -f $odexFile classes*.dex
+
+        extension="$(echo $apk | rev | cut -f1 -d. | rev)"
+        if [[ "$extension" == "apk" ]]; then
+            echo "  * zipaligning apk"
+            zpln $apk silent
         fi
     fi
 }
@@ -170,7 +224,7 @@ deodexDir() {
     # Parse directory structure
     if [[ "$1" == "framework" ]]; then
         # Framework folder
-        odexCount="$(find . -maxdepth 1 -name '*.odex' | wc -l | tr -d ' ')"
+        odexCount="$(find . -maxdepth 1 -type f -name '*.odex' | wc -l | tr -d ' ')"
         
         # Determine odex location
         if [[ "$odexCount" == "0" ]]; then
@@ -181,7 +235,7 @@ deodexDir() {
 
         # Deodex framework files first
         for fwFile in *.apk *.jar; do
-            odexFile="$(findOdex $baseDir $fwFile $plat)"
+            odexFile="$(findOdex $fwFile $plat)"
             if [[ "$odexFile" == "false" ]]; then
                 echo "- $fwFile: no odex file"
             else
@@ -191,12 +245,13 @@ deodexDir() {
 
         # Sometimes, the OEM puts extra framework APKs in this folder,
         # so we have to check for them (especially for Android 5.x+ structure)
-        apkCount="$(find $baseDir -mindepth 2 -name '*.apk' | wc -l | tr -d ' ')"
-        if [[ "$apkCount" != "0" ]]; then
-            find $baseDir -mindepth 2 -name '*.apk' | while read apk; do
-                apkFolder="$(echo $apk | rev | cut -f2- -d/ | rev)"
-                cd $apkFolder
-                odexFile="$(findOdex $baseDir $apk $plat)"
+        apkCount="$(find . -mindepth 2 -name '*.apk' | wc -l | tr -d ' ')"
+        if [[ "$apkCount" != "0" ]] && [ "$plat" -gt "1" ]; then
+            find . -mindepth 2 -name '*.apk' | while read fw; do
+                apkFolder="$(echo $fw | rev | cut -f2- -d/ | rev | sed 's/.\///')"
+                apk="$apkFolder.apk"
+                cd "$baseDir/$apkFolder"
+                odexFile="$(findOdex $apk $plat)"
                 if [[ "$odexFile" == "false" ]]; then
                     echo "- $apk: no odex file"
                 else
@@ -215,7 +270,7 @@ deodexDir() {
                 apk="$(echo $apkFolder | cut -f1 -d/).apk"
                 if [[ -e "$apk" ]]; then
                     [[ -d "oat" ]] && plat=3 || plat=2
-                    odexFile="$(findOdex $baseDir $apk $plat)"
+                    odexFile="$(findOdex $apk $plat)"
                     if [[ "$odexFile" == "false" ]]; then
                         echo "- $apk: no odex file"
                     else
@@ -228,7 +283,7 @@ deodexDir() {
         else
             # Pre-Android 5.x: apk files are lumped together within the directory
             for apk in *.apk; do
-                odexFile="$(findOdex $baseDir $apk 1)"
+                odexFile="$(findOdex $apk 1)"
                 if [[ "$odexFile" == "false" ]]; then
                     echo "- $apk: no odex file"
                 else
@@ -240,28 +295,24 @@ deodexDir() {
 }
 
 findOdex() {
-    baseDir="$1"
-    apkName="$(echo $2 | sed 's/.apk//' | sed 's/.jar//')"
-    basePath="$baseDir/$apkName"
+    apkName="$(echo $1 | sed 's/.apk//' | sed 's/.jar//')"
     odexFile=
 
-    case $3 in
+    case $2 in
         1)
             # Pre-Android 5.x: odex file is in same directory
             odexFile="$apkName.odex"
             ;;
         2)
             # Android 5.x: odex file is in <arch> subdirectory
-            [[ -d "$basePath/arm64" ]] && arch="arm64" || arch="arm"
             odexFile="$arch/$apkName.odex"
             ;;
         3)
             # Android 6.x and beyond: odex file is in oat/<arch> subdirectory
-            [[ -d "$basePath/arm64" ]] && arch="arm64" || arch="arm"
             odexFile="oat/$arch/$apkName.odex"
             ;;
     esac
 
-    [[ ! -f "$odexFile" ]] && odexFile="false"
+    [[ ! -e "$odexFile" ]] && odexFile="false"
     echo $odexFile
 }

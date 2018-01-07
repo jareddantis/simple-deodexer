@@ -64,16 +64,20 @@ done
 if [ "$api" -lt "20" ]; then
     bootclasspath="$triage/framework"
     echo "Please remember to copy your bootclass files to $triage/framework!"
-elif [[ "$api" == "21" ]] || [[ "$api" == "22" ]]; then
-    echo "Sorry, Lollipop apps cannot be deodexed (unsupported oat version 45)."
-    quit
 else
-    [ -d "$triage/framework/arm64" ] && arch="arm64" || arch="arm"
+    [ -d "$triage/framework/arm64" ] && arch="arm64"
     bootclasspath="$triage/framework/$arch"
     echo "Please remember to copy /system/framework/$arch to $triage/framework!"
 fi
 
 # Begin
+if [[ "$api" == "21" ]] || [[ "$api" == "22" ]]; then
+    echo "Deoptimizing boot.oat..."
+    error=0
+    rm $triage/oat2dex.log
+    deoptBoot
+    [[ "$error" != "0" ]] && abort
+fi
 for folder in ${processDirList[@]}; do
     baseDir="$triage/$folder"
     odexCount="$(find $baseDir -type f -name '*.odex' | wc -l | tr -d ' ')"
@@ -81,7 +85,7 @@ for folder in ${processDirList[@]}; do
     if [[ "$odexCount" == "0" ]]; then
         echo "No apps to deodex in /$folder"
     else
-        echo -e "\nDeodexing files in /$folder"
+        echo -e "\nDeodexing /$folder"
         deodexDir "$folder"
     fi
 done
