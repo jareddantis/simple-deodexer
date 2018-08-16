@@ -4,7 +4,7 @@
 api=0
 arch="arm"
 aligner=
-processDirList=(framework app priv-app)
+processDirList=(framework app priv-app vendor/app)
 baksmali="$rootDir/tools/baksmali-2.2.2.jar"
 smali="$rootDir/tools/smali-2.2.2.jar"
 oat2dex="$rootDir/tools/oat2dex.jar"
