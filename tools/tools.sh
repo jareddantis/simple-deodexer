@@ -87,7 +87,8 @@ checkJava() {
     fi
     if [[ "$_java" ]]; then
         version=$("$_java" -version 2>&1 | awk -F '"' '/version/ {print $2}')
-        if [[ "$version" < "1.7" ]]; then
+        major_version=$(echo $version | awk -F '.' '{print $1}')
+        if [[ "$major_version" -lt "7" && "$version" < "1.7" ]]; then
             echo "This script requires Java 1.7 or later to run properly."
             abort
         fi
